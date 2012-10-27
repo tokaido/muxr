@@ -1,6 +1,9 @@
 # Muxr
 
-TODO: Write a gem description
+A WIP library that exposes a single HTTP connection that it proxies
+to multiple endpoints based on their Host.
+
+It is designed for use in Tokaido.
 
 ## Installation
 
@@ -18,7 +21,7 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+This library is not ready for use yet.
 
 ## Contributing
 
