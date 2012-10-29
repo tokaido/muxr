@@ -7,15 +7,15 @@ module Muxr
     end
 
     def boot
+      puts "Booting Muxr Server"
       @apps.start
-      register_traps
 
       @proxy = Proxy.new(@apps, port)
       @proxy.start
-      sleep
     end
 
-    def kill
+    def stop
+      puts "Stopping Muxr Server"
       @apps.stop
       @proxy.stop
 
@@ -25,17 +25,6 @@ module Muxr
   private
     def port
       @options[:port]
-    end
-
-    def register_traps
-      trap(:INT) do
-        puts " Exiting"
-        exit
-      end
-
-      at_exit do
-        kill
-      end
     end
   end
 end
