@@ -29,6 +29,7 @@ module Muxr
 
     def kill
       @killed = true
+      Process.kill(:INT, @pid)
     end
 
     def port
@@ -43,7 +44,7 @@ module Muxr
     def execute_command
       Dir.chdir(@directory) do
         Bundler.with_clean_env do
-          Process.spawn({ "PORT" => port.to_s }, command)
+          @pid = Process.spawn({ "PORT" => port.to_s }, command)
         end
       end
     end
@@ -54,14 +55,11 @@ module Muxr
 
     def monitor(pid)
       status = loop do
-        break if @killed
-        _, status = Process.wait2(pid, Process::WNOHANG)
-        break status if status
-
-        sleep 1
+        _, status = Process.wait2(pid)
+        break status
       end
 
-      restart if status
+      restart unless @killed
     end
 
     def command
