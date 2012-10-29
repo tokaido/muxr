@@ -3,10 +3,14 @@ module Muxr
     def self.new(directory, options = {})
       return super if self != Application
 
-      directory = File.expand_path(directory)
+      if directory.nil?
+        ManagedApp.new(directory, options)
+      else
+        directory = File.expand_path(directory)
 
-      if File.exist?(File.join(directory, "Procfile"))
-        ProcfileApp.new(directory, options)
+        if File.exist?(File.join(directory, "Procfile"))
+          ProcfileApp.new(directory, options)
+        end
       end
     end
 
@@ -79,6 +83,17 @@ module Muxr
           web[1]
         end
       end
+    end
+  end
+
+  class ManagedApp < Application
+    def execute_command(*)
+    end
+
+    def monitor(*)
+    end
+
+    def spawn_monitor(*)
     end
   end
 end
