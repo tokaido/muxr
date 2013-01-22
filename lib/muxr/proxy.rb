@@ -12,7 +12,7 @@ module Muxr
     def start
       @started = true
 
-      Thread.new { accept }
+      LoggedThread.new { accept }
     end
 
     def stop

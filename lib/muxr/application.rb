@@ -22,6 +22,8 @@ module Muxr
       end
     end
 
+    attr_reader :directory
+
     def initialize(directory, options)
       @directory = directory
       @options = options
@@ -58,7 +60,7 @@ module Muxr
     end
 
     def spawn_monitor(pid)
-      Thread.new { monitor(pid) }
+      LoggedThread.new { monitor(pid) }
     end
 
     def monitor(pid)
@@ -68,10 +70,6 @@ module Muxr
       end
 
       restart unless @killed
-    rescue Exception => e
-      puts "#{e.class}: #{e.message}"
-      puts e.backtrace
-      raise
     end
 
     def command
