@@ -1,3 +1,11 @@
+unless defined?(Bundler.with_clean_env)
+  module Bundler
+    def with_clean_env(*)
+      yield
+    end
+  end
+end
+
 module Muxr
   class Application
     def self.new(directory, options = {})
@@ -60,6 +68,10 @@ module Muxr
       end
 
       restart unless @killed
+    rescue Exception => e
+      puts "#{e.class}: #{e.message}"
+      puts e.backtrace
+      raise
     end
 
     def command
