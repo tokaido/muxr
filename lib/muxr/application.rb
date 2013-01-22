@@ -1,6 +1,6 @@
 unless defined?(Bundler.with_clean_env)
   module Bundler
-    def with_clean_env(*)
+    def self.with_clean_env(*)
       yield
     end
   end
