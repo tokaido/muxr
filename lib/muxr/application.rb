@@ -1,3 +1,5 @@
+require "pty"
+
 unless defined?(Bundler.with_clean_env)
   module Bundler
     def self.with_clean_env(*)
@@ -50,13 +52,32 @@ module Muxr
       @options[:host]
     end
 
+    def out
+      @options[:out]
+    end
+
+    def err
+      @options[:err]
+    end
+
   private
     def execute_command
       Dir.chdir(@directory) do
         Bundler.with_clean_env do
-          @pid = Process.spawn({ "PORT" => port.to_s }, command)
+          ENV["PORT"] = port.to_s
+
+          log = File.open(out, 'a')
+          stdin, stdout, @pid = PTY.spawn(command)
+
+          LoggedThread.new do
+            stdin.each do |line|
+              log.puts line; log.flush
+            end
+          end
         end
       end
+
+      @pid
     end
 
     def spawn_monitor(pid)
@@ -69,6 +90,8 @@ module Muxr
         break status
       end
 
+      restart unless @killed
+    rescue Errno::ECHILD
       restart unless @killed
     end
 

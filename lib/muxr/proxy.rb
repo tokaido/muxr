@@ -24,10 +24,12 @@ module Muxr
     def accept
       while @started
         accept_request do |proxy_socket|
-          host, parsed_lines = find_host(proxy_socket)
+          LoggedThread.new do
+            host, parsed_lines = find_host(proxy_socket)
 
-          if port = @apps[host]
-            connect_proxy(proxy_socket, port, parsed_lines)
+            if host && port = @apps[host]
+              connect_proxy(proxy_socket, port, parsed_lines)
+            end
           end
         end
       end
@@ -38,8 +40,6 @@ module Muxr
     def accept_request
       proxy_socket = @server.accept
       yield proxy_socket
-    ensure
-      proxy_socket.close if proxy_socket
     end
 
     def find_host(proxy_socket)
@@ -48,22 +48,26 @@ module Muxr
 
       parsed_lines = []
 
-      host = loop do
-        IO.select([proxy_socket])
+      Timeout.timeout(5) do
+        host = loop do
+          IO.select([proxy_socket])
 
-        line = proxy_socket.readline
-        parsed_lines << line
+          line = proxy_socket.readline
+          parsed_lines << line
 
-        proxy_socket.close and break if line.empty?
+          proxy_socket.close and break if line.empty?
 
-        if host = line[/^Host:\s*(.*?)(:\d+)?\r?$/, 1]
-          break host
-        else
-          # TODO: Handle error gracefully
+          if host = line[/^Host:\s*(.*?)(:\d+)?\r?$/, 1]
+            break host
+          else
+            # TODO: Handle error gracefully
+          end
         end
-      end
 
-      [ host, parsed_lines ]
+        return [ host, parsed_lines ]
+      end
+    rescue Timeout::Error
+    rescue EOFError
     end
 
     def connect_proxy(proxy_socket, port, parsed_lines)
@@ -73,6 +77,8 @@ module Muxr
 
         begin_proxy(proxy_socket, app_socket)
       end
+    ensure
+      proxy_socket.close
     end
 
     def connect_to_app(port)
@@ -82,7 +88,7 @@ module Muxr
       sleep 1
       retry
     ensure
-      app_socket.close
+      app_socket.close if app_socket
     end
 
     def begin_proxy(proxy_socket, app_socket)
@@ -98,7 +104,7 @@ module Muxr
             other.write data
             other.flush
           end
-        rescue EOFError
+        rescue EOFError, Errno::ECONNRESET, Errno::EPIPE => e
           break
         end
       end

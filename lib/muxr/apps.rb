@@ -24,9 +24,11 @@ module Muxr
 
     def stop
       @mutex.synchronize do
+        return if @stopped
         @stopped = true
-        @apps.each(&:kill)
       end
+
+      @apps.each(&:kill)
     end
 
     def add(app, responder=nil)
