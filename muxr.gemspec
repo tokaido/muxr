@@ -8,8 +8,8 @@ Gem::Specification.new do |gem|
   gem.version       = Muxr::VERSION
   gem.authors       = ["Yehuda Katz"]
   gem.email         = ["wycats@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{A library that exposes a single HTTP connection that it proxies to multiple endpoints based on their Host. It is designed for use with Tokaido.}
+  gem.summary       = gem.description
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($/)
