@@ -55,6 +55,8 @@ module Muxr
         app.kill if @started
 
         @apps.delete(app)
+
+        return :removed
       end
     end
 
