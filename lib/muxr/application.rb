@@ -20,6 +20,8 @@ module Muxr
 
         if File.exist?(File.join(directory, "Procfile"))
           ProcfileApp.new(directory, options)
+        else
+          RackApp.new(directory, options)
         end
       end
     end
@@ -67,7 +69,7 @@ module Muxr
           ENV["PORT"] = port.to_s
 
           log = File.open(out, 'a')
-          stdin, stdout, @pid = PTY.spawn(command)
+          stdin, _, @pid = PTY.spawn(command)
 
           LoggedThread.new do
             stdin.each do |line|
@@ -114,6 +116,12 @@ module Muxr
           web[1]
         end
       end
+    end
+  end
+
+  class RackApp < Application
+    def command
+      "bundle exec rackup -p $PORT"
     end
   end
 
