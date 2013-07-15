@@ -43,6 +43,8 @@ module Muxr
 
     def kill
       @killed = true
+      return if @failed
+
       Process.kill(:INT, @pid)
     end
 
@@ -94,7 +96,7 @@ module Muxr
 
       if exitstatus && exitstatus > 0
         @failed = true
-        options[:delegate].failed(self) if options[:delegate]
+        @options[:delegate].failed(self) if @options[:delegate]
       else
         restart unless @killed
       end
