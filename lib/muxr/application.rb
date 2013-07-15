@@ -26,7 +26,7 @@ module Muxr
       end
     end
 
-    attr_reader :directory
+    attr_reader :directory, :failed
 
     def initialize(directory, options)
       @directory = directory
@@ -87,9 +87,16 @@ module Muxr
     end
 
     def monitor(pid)
-      status = loop do
+      exitstatus = loop do
         _, status = Process.wait2(pid)
-        break status
+        break status.exitstatus
+      end
+
+      if exitstatus && exitstatus > 0
+        @failed = true
+        options[:delegate].failed(self) if options[:delegate]
+      else
+        restart unless @killed
       end
 
       restart unless @killed
