@@ -122,7 +122,7 @@ module Muxr
     def command
       @command ||= begin
         if web = @procfile.match(/^web:\s*(.*)$/)
-          web[1]
+          web[1] + " --host 127.0.0.1 --server puma -p $PORT"
         end
       end
     end
@@ -130,7 +130,7 @@ module Muxr
 
   class RackApp < Application
     def command
-      "bundle exec rackup -p $PORT"
+      "bundle exec rackup --host 127.0.0.1 --server puma -p $PORT"
     end
   end
 
