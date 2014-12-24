@@ -9,6 +9,20 @@ unless defined?(Bundler.with_clean_env)
 end
 
 module Muxr
+  module Helpers
+    def self.options
+      { rails: 
+          { host: '-b' },
+         rack:
+          { host: '-o' }
+      }
+    end
+
+    def self.is_rails_server? command
+      !!(command =~ /rails/)
+    end
+  end
+
   class Application
     def self.new(directory, options = {})
       return super if self != Application
@@ -120,17 +134,32 @@ module Muxr
 
   private
     def command
-      @command ||= begin
-        if web = @procfile.match(/^web:\s*(.*)$/)
-          web[1] + " --host 127.0.0.1 --server puma -p $PORT"
+      @command ||= relax_command
+    end
+
+    def relax_command 
+      relaxed_command = ""
+
+      if web_entry = @procfile.match(/^web:\s*(.*)$/) 
+        if Helpers.is_rails_server?(web_entry[1])
+          relaxed_command = web_entry[1].sub('server', 'server puma')
+          relaxed_command << " #{Helpers.options[:rails][:host]} "
+        else
+          relaxed_command = web_entry[1]
+          relaxed_command << " #{Helpers.options[:rack][:host]} "
         end
+
+        relaxed_command << "127.0.0.1"
       end
+
+      relaxed_command << " -p $PORT"
+      relaxed_command
     end
   end
 
   class RackApp < Application
     def command
-      "bundle exec rackup --host 127.0.0.1 --server puma -p $PORT"
+      "bundle exec rackup #{Helpers.options[:rack][:host]} 127.0.0.1 --server puma -p $PORT"
     end
   end
 
