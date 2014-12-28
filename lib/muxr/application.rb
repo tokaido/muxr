@@ -9,24 +9,6 @@ unless defined?(Bundler.with_clean_env)
 end
 
 module Muxr
-  module Helpers
-    def self.options
-      { rails: 
-          { host: '-b', additions: []},
-        rackup:
-          { host: '-o', additions: []},
-        unicorn:
-          { host: '-o', additions: []},
-        thin:
-          { host: '-a', additions: [:start]}
-      }
-    end
-
-    def self.is_rails_server? command
-      !!(command =~ /rails/)
-    end
-  end
-
   class Application
     def self.new(directory, options = {})
       return super if self != Application
@@ -138,42 +120,17 @@ module Muxr
 
   private
     def command
-      @command ||= relax_command
-    end
-
-    def relax_command 
-      relaxed_command = ""
-
-      if web_entry = @procfile.match(/^web:\s*(.*)$/) 
-        cmd_pieces = web_entry[1].split(" ") << " "
-        possible_server = cmd_pieces[cmd_pieces.index("exec") + 1].to_sym
-
-        if Helpers.is_rails_server?(web_entry[1])
-          relaxed_command = web_entry[1].sub('server', 'server puma')
-          relaxed_command << " #{Helpers.options[:rails][:host]} "
-        else
-          relaxed_command = web_entry[1]
-
-          begin
-            with_flag = Helpers.options.fetch(possible_server) { Hash[:host, "-o"] }[:host]
-            relaxed_command << " " << with_flag << " "
-          rescue
-            relaxed_command << " " << Helpers.options[:rackup][:host] << " "
-          end
-        end
-
-        relaxed_command << "127.0.0.1"
-      end
-
-      relaxed_command << " -p $PORT"
-      relaxed_command << " #{Helpers.options.fetch(possible_server){Hash[:additions, []]}[:additions].join(' ')}"
-      relaxed_command
+      @command ||= begin
+         if web = @procfile.match(/^web:\s*(.*)$/)
+           web[1]
+         end
+       end
     end
   end
 
   class RackApp < Application
     def command
-      "bundle exec rackup #{Helpers.options[:rackup][:host]} 127.0.0.1 --server puma -p $PORT"
+      "bundle exec rackup -p $PORT"
     end
   end
 
