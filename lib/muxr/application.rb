@@ -71,10 +71,10 @@ module Muxr
           ENV["PORT"] = port.to_s
 
           log = File.open(out, 'a')
-          stdin, _, @pid = PTY.spawn(command)
+          stdout, _, @pid = PTY.spawn(command)
 
           LoggedThread.new do
-            stdin.each do |line|
+            stdout.each do |line|
               log.puts line; log.flush
             end
           end
